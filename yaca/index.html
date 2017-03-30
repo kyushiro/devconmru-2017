@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <title>Yet another chat app</title>
+
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/bootstrap-reboot.min.css">
+    <link rel="stylesheet" href="css/bootstrap-grid.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    
+</head>
+<body>
+    <div id="chatbox">
+       <section id="data-chatbox">
+           <div class="msg-container template container">
+               <div class="timestamp text-right text-muted">19:00</div>
+               <div class="row">
+                   <div class="col-md-* sender">
+                       test-sender
+                   </div>
+                   <div class="col-md-10 message">
+                       Hello World!
+                   </div>
+               </div>
+               <!--<span class="sender">kyukyu</span>:-->
+               <!--<span class="message">hello!</span>-->
+           </div>
+       </section>
+       <div class="jumbotron">
+       <div  class="container">
+               <div class="row">
+                   <div class="col-8">
+                      <div class="form-group row">
+                        <input placeholder="Username" class="form-control form-control-sm" type="text" id="data-uname" required>
+                      </div>
+                   </div>
+                   <div class="col-4">
+                       <div class="form-group row">
+                            <label for="data-color" class="col-3 col-form-label">Color</label>
+                            <div class="col-5">
+                                <input type="color" id="data-color" class="form-control form-control-sm">
+                            </div>               
+                        </div>
+                   </div>
+               </div>
+
+               <div class="row">
+                   <div class="col-9">
+                       <div class="form-group row">
+                           <textarea placeholder="Enter a Message" class="form-control form-control-sm" id="data-msg"></textarea>
+                       </div>
+                   </div>
+                   <div class="col-3">
+                       <button class="btn btn-success btn-sm">send</button>
+                   </div>
+               </div>
+       </div>
+       </div>
+
+    </div>
+
+    <div id="loading">
+        <div class="blocking"></div>
+        <div class="load">
+            <p>connecting...</p>
+        </div>
+    </div>
+</body>
+</html>
+
+<script src="javascript/jquery-1.9.0.min.js"></script>
+<script>
+    $(function() {
+        var cb = $("#chatbox").hide();
+
+        cb.on("click", "button", msgSubmit);
+        cb.on("keypress", function(e) {
+            if(e.which == 13) {
+                e.preventDefault();
+                ( ($("#data-msg").val()!="") && ($("#data-uname").val()!='') ) ? msgSubmit() : beep();;
+            }
+        });
+        
+
+        var ws = new WebSocket("ws://ws-devcon.cf:1995");
+
+        ws.onopen = function(){
+            var load = $("#loading"),
+                content = load.find("p");
+
+            content.text("Connected! ☺");
+            content.css("color", "#5DA633");
+
+            load.fadeOut(1500);
+            $("#chatbox").fadeIn(3000);
+        };
+
+        ws.onmessage = function(e){
+            pushMsg(e.data);
+        };
+
+        ws.onerror = function(){
+            console.log("error");
+
+            var content = $("#loading").find("p");
+
+            setTimeout(function() {
+                content.text("error Connecting to ws server ~ ~ ~");
+                content.css("color", "#000");
+            }, 1000);
+        };
+
+        function send(content) {
+            ws.send(content);
+        }
+
+        function pushMsg(content) {
+            // alert(content);
+            content = JSON.parse(content);
+            var container = $('.template.msg-container').clone();
+            var sender = content.sender == $("#data-uname").val() ? "ME" : content.sender;
+            container.find(".sender").html(sender);
+            container.find(".message").html(content.message).css("color",content.color);
+            var currentdate = new Date();
+            // var displaydate = currentdate.format("hh:mm tt");
+            var mins = currentdate.getMinutes() >= 10 ? currentdate.getMinutes() : "0"+currentdate.getMinutes();
+            var displaydate = currentdate.getHours() + ":" + mins;
+
+            container.find('.timestamp').html(displaydate);
+
+
+
+            container.removeClass("template").appendTo("#data-chatbox");
+            var newmsg_top = parseInt($('.message:last').offset().top)
+          //  $("#data-chatbox").scrollTop(newmsg_top);
+	    $("#data-chatbox").animate({ scrollTop:$("#data-chatbox")[0].scrollHeight }, 1000);
+	    beep(50,300);
+
+        }
+
+        function msgSubmit() {
+            var msg = $("#data-msg").val(),
+                color = $("#data-color").val(),
+                uname = $("#data-uname").val(),
+                content = {
+                    color: color,
+                    message: msg,
+                    sender: uname
+                };
+
+            content = JSON.stringify(content);
+                
+            $("#data-msg").val("");
+
+            send(content);
+        }
+    });
+
+    var audioCtx = new (window.AudioContext || window.webkitAudioContext || window.audioContext);
+    function beep(duration, frequency, volume, type, callback) {
+        var oscillator = audioCtx.createOscillator();
+        var gainNode = audioCtx.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        if (volume){gainNode.gain.value = volume;};
+        if (frequency){oscillator.frequency.value = frequency;}
+        if (type){oscillator.type = type;}
+        if (callback){oscillator.onended = callback;}
+
+        oscillator.start();
+        setTimeout(function(){oscillator.stop()}, (duration ? duration : 500));
+    }
+</script>

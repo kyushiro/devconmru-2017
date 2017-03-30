@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <title>Live Survey Form</title>
+
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/bootstrap-reboot.min.css">
+    <link rel="stylesheet" href="css/bootstrap-grid.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    
+</head>
+<body>
+    <div id="surveybox">
+       <section id="data-surveybox">
+
+            <div class="row">
+              <div class="col-sm-9 col-xs-12">
+                  <div id="data-dump" style="width:100%"></div>
+              </div>
+
+              <div class="col-sm-3 hidden-xs-down">
+		<img class="img-fluid" src="https://chart.googleapis.com/chart?chs=545x545&cht=qr&chl=http://ws-devcon.cf:8000&choe=UTF-8" />
+<p>
+<h3 class="text-center">
+http://ws-devcon.cf:8000
+</h3>
+</p>
+	      </div>
+            </div>
+         </section>
+
+       <div class="jumbotron">
+            <div  class="container">
+                    <div class="row">
+                        <div class="col-3">
+                            <div class="form-group row">
+                                <select placeholder="Select a technology" class="form-control form-control-sm" id="select-tech"> </select>
+                            </div>
+                        </div>
+                        <div class="col-8">
+                            <div class="form-group row">
+                                    <label for="data-color" class="col-1 col-form-label">OR</label>
+                                    <div class="col-10">
+                                        <input placeholder="Enter a new technology" type="text" id="text-tech" class="form-control form-control-sm" />
+                                    </div>               
+                             </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-12">
+                            <button class="btn btn-success btn-sm">send</button>
+                        </div>                        
+                    </div>
+            </div>
+       </div>
+
+    </div>
+
+
+
+
+    <div id="loading">
+        <div class="blocking"></div>
+        <div class="load">
+            <p>connecting...</p>
+        </div>
+    </div>
+</body>
+</html>
+
+<script src="javascript/jquery-1.9.0.min.js"></script>
+<script src="http://code.highcharts.com/highcharts.js"></script>
+<script src="http://code.highcharts.com/modules/exporting.js"></script>
+<script>
+    $(function() {
+        var cb = $("#surveybox").hide();
+
+        cb.on("click", "button", msgSubmit);
+
+        var ws = new WebSocket("ws:/ws-devcon.cf:1995");
+
+        ws.onopen = function(){
+            var load = $("#loading"),
+                content = load.find("p");
+
+            content.text("Connected! ☺");
+            content.css("color", "#5DA633");
+
+            load.fadeOut(1500);
+            $("#surveybox").fadeIn(3000);
+        };
+
+        ws.onmessage = function(e){
+            var obj = JSON.parse(e.data);
+            var graphData = [];
+
+            var keys = Object.keys(obj);
+            $(keys).each(function(){
+                if (!$("option#v-"+this).length){
+                    console.log("no option found for "+this);
+                    $("#select-tech").append("<option id='v-"+this+"'>"+this+"</option>");
+                }
+                graphData.push([this.toString(), obj[this]]);
+                
+            });
+
+            console.table(graphData);
+            RenderPieChart("data-dump",graphData);
+        };
+
+        ws.onerror = function(){
+            console.log("error");
+
+            var content = $("#loading").find("p");
+
+            setTimeout(function() {
+                content.text("error Connecting to ws server ~ ~ ~");
+                content.css("color", "#000");
+            }, 1000);
+        };
+
+        function send(content) {
+            ws.send(content);
+        }
+
+        function msgSubmit() {
+            var content = $("#text-tech").val()!="" ? $("#text-tech").val() : $("#select-tech").val()
+
+            $("#text-tech").val("");
+
+            send(content);
+        }
+
+
+
+
+
+        // data functions
+
+
+
+
+    });
+
+    var audioCtx = new (window.AudioContext || window.webkitAudioContext || window.audioContext);
+    function beep(duration, frequency, volume, type, callback) {
+        var oscillator = audioCtx.createOscillator();
+        var gainNode = audioCtx.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        if (volume){gainNode.gain.value = volume;};
+        if (frequency){oscillator.frequency.value = frequency;}
+        if (type){oscillator.type = type;}
+        if (callback){oscillator.onended = callback;}
+
+        oscillator.start();
+        setTimeout(function(){oscillator.stop()}, (duration ? duration : 500));
+    }
+
+
+
+
+
+  
+           
+            function RenderPieChart(elementId, dataList) {
+                new Highcharts.Chart({
+                    chart: {
+                        renderTo: elementId,
+                        plotBackgroundColor: null,
+                        plotBorderWidth: null,
+                        plotShadow: false
+                    }, title: {
+                        text: 'What is your favourite programming tool or technology?'
+                    },
+                    tooltip: {
+                        formatter: function () {
+                            return '<b>' + this.point.name + '</b>: ' + this.y +' votes ('+ this.percentage + ' %)';
+                        }
+                    },
+                    plotOptions: {
+                        pie: {
+                            allowPointSelect: true,
+                            cursor: 'pointer',
+                            dataLabels: {
+                                enabled: true,
+                                color: '#000000',
+                                connectorColor: '#000000',
+                                formatter: function () {
+                                    return '<b>' + this.point.name + '</b>: ' + this.y;
+                                }
+                            }
+                        }
+                    },
+                    series: [{
+                        type: 'pie',
+                        name: 'Tech share',
+                        data: dataList
+                    }]
+                });
+            };
+
+</script>

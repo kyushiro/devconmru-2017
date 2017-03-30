@@ -1,0 +1,25 @@
+* { margin: 0; padding: 0; }
+
+html { width: 100%; }
+body { width: 100%;  }
+input { border: solid 1px #CDD7E2; }
+
+#kof { margin: 0 auto; }
+
+#loading { position: absolute; width: 100%; height: 100%; z-index: 111; top: 0; left: 0; }
+#loading .blocking { position: absolute; width: 100%; height: 100%; z-index: 222; background: #eee; opacity: 0.6; }
+#loading .load { position: absolute; top: 40%; width: 100%; z-index: 333; }
+#loading p { text-align: center; font-size: 2em; font-weight: bold; color: #4D8CF5; font-family: Consolas, "Liberation Mono", Menlo, Courier, monospace; opacity: 1; }
+
+                    #data-chatbox { position: relative; overflow: hidden; display:inline-block; width: 100%; height: 100%; box-shadow: 2px 2px1px #888888; border: solid 1px #CDD7E2; }
+                    #data-send { width: 100%; margin: 2px 0; }
+                    #data-send input { height: 1.4em; font-size: 1.2em; margin: 2px 0; vertical-align: middle; }
+                    #data-send #data-size { width: 4em; height: 2em; }
+                    #data-send #data-color { margin: 0 5px; }
+                    #data-send #data-msg { width: 80%; padding: 2px 0; }
+                    #data-send .submit { height: 2.2em; width: 18%; float: right; font-size: 1em; }
+#data-chatbox { height:60vh; overflow-y: scroll; width: 100%; }
+.template {display: none;}
+.jumbotron {padding:1rem;}
+.sender{padding: 10px;}
+.message{background: #fbf9fa;padding: 10px;}
